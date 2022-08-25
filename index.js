@@ -65,4 +65,33 @@ const ctod = (cid) => {
     return "0x00"
   }
 }
-module.exports = { file, folder, directory, CID, dtoc, ctod }
+
+
+// digest (0x...) to cid
+const toCid = (hex, encoding) => {
+  let arr = new Uint8Array(hex.slice(2).match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+  let digest = create(18, arr)
+  let e = (encoding === "dag-pb" ? 0x70 : 0x55)
+  let cid = CID.createV1(e, digest)
+  return cid.toString()
+}
+const fromCid = (cid) => {
+  if (cid && cid.length > 0) {
+    let parsed = CID.parse(cid)
+    let digest = parsed.multihash.digest
+    let bytes = digest.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
+    let encoding
+    if (parsed.code === 112) encoding = "dag-pb"
+    else if (parsed.code === 85) encoding = "raw"
+    else encoding = parsed.code
+    return {
+      digest: "0x" + bytes,
+      encoding,
+    }
+  } else {
+    return {
+      digest: "0x00"
+    }
+  }
+}
+module.exports = { file, folder, directory, CID, dtoc, ctod, fromCid, toCid }
